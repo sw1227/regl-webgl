@@ -46,6 +46,8 @@ const Sample = () => {
         ]
       });
     });
+
+    return () => { regl.destroy() }; // Clean up when unmounted
   }, []);
 
   return <></>;
