@@ -3,7 +3,7 @@ import createRegl from "regl";
 
 
 const Sample = () => {
-  const regl = createRegl(); // No arguments: creat a full screen canvas
+  const regl = createRegl(); // No arguments: create a full screen canvas
 
   const drawTriangle = regl({
     frag: `

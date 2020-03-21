@@ -1,6 +1,7 @@
 import React from "react";
 import { HashRouter as Router, Route, Link } from "react-router-dom";
 import Sample from  "./views/Sample";
+import Particle from "./views/Particle";
 
 
 const App = () => (
@@ -12,6 +13,9 @@ const App = () => (
       <li>
         <Link to="/sample">Sample</Link>
       </li>
+      <li>
+        <Link to="/particle">Particle</Link>
+      </li>
     </ul>
   </div>
 );
@@ -22,6 +26,7 @@ const AppRouter = () => (
     <div>
       <Route path="/" exact component={App} />
       <Route path="/sample" component={Sample} />
+      <Route path="/particle" component={Particle} />
     </div>
   </Router>
 );
