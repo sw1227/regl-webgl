@@ -49,32 +49,17 @@ const Particle = () => {
   );
 
   // ---------- regl commands ----------
-  // Draw the content of screenState[tick%2] to the screen
-  const textureCommand = (vert, frag) => regl({
+  // Draw faded texture
+  const fadeCommand = (vert, frag) => regl({
     vert: vert,
     frag: frag,
     attributes: {
       a_pos: a_pos,
     },
     uniforms: {
-      u_screen: ({ tick }) => screenState[tick % 2],
+      u_screen: regl.prop("texture"),
       u_opacity: regl.prop("opacity"),
     },
-    count: 6
-  });
-
-  // Draw screenState[(tick + 1) % 2] to screenState[tick % 2] with opacity
-  const blendCommand = (vert, frag) => regl({
-    vert: vert,
-    frag: frag,
-    attributes: {
-      a_pos: a_pos
-    },
-    uniforms: {
-      u_screen: ({ tick }) => screenState[(tick + 1) % 2],
-      u_opacity: regl.prop("opacity"),
-    },
-    framebuffer: ({ tick }) => screenState[tick % 2],
     count: 6
   });
 
@@ -89,7 +74,6 @@ const Particle = () => {
       u_particles: ({ tick }) => particleState[tick % 2],
       u_particles_res: particleRes,
     },
-    framebuffer: ({ tick }) => screenState[tick % 2],
     primitive: "points",
     count: numParticles
   });
@@ -111,13 +95,9 @@ const Particle = () => {
   // ---------- Draw ----------
   useAsyncEffect(async () => {
     // Create regl command with fetched GLSL code
-    const drawTexture = textureCommand(
+    const drawFadedTexture = fadeCommand(
       await fetchShaderText(SHADER_PATH.quadVert),
-      await fetchShaderText(SHADER_PATH.screenFrag)
-    );
-    const drawPrevious = blendCommand(
-      await fetchShaderText(SHADER_PATH.quadVert),
-      await fetchShaderText(SHADER_PATH.screenFrag)
+      await fetchShaderText(SHADER_PATH.screenFrag),
     );
     const drawParticles = particleCommand(
       await fetchShaderText(SHADER_PATH.particleVert),
@@ -139,10 +119,20 @@ const Particle = () => {
         });
       });
 
-      // Draw
-      drawPrevious({ opacity: fadeOpacity }); // screenState[(tick+1) % 2] -> screenState[tick % 2]
-      drawParticles(); // particleState[tick % 2] -> screenState[tick % 2]
-      drawTexture({ opacity: 1 }); // screenState[tick % 2] -> screen
+      screenState[tick % 2].use(() => {
+        // screenState[(tick+1) % 2] -> screenState[tick % 2]
+        drawFadedTexture({
+          opacity: fadeOpacity,
+          texture: screenState[(tick + 1) % 2]
+        });
+        // particleState[tick % 2] -> screenState[tick % 2]
+        drawParticles();
+      });
+      // screenState[tick % 2] -> screen
+      drawFadedTexture({
+        opacity: 1,
+        texture: screenState[tick % 2]
+      });
 
       // Update states
       updateParticles(); // particleState[tick % 2] -> particleState[(tick+1) % 2]
