@@ -71,7 +71,7 @@ const Particle = () => {
       a_index: [...Array(numParticles).keys()]
     },
     uniforms: {
-      u_particles: ({ tick }) => particleState[tick % 2],
+      u_particles: regl.prop("particle"),
       u_particles_res: particleRes,
     },
     primitive: "points",
@@ -113,29 +113,20 @@ const Particle = () => {
       screenState.forEach(screen => {
         screen.resize(viewportWidth, viewportHeight);
       });
-      screenState[tick % 2].use(() => {
-        regl.clear({
-          color: [0, 0, 0, 1]
-        });
-      });
 
       screenState[tick % 2].use(() => {
-        // screenState[(tick+1) % 2] -> screenState[tick % 2]
+        regl.clear({ color: [0, 0, 0, 1] });
         drawFadedTexture({
           opacity: fadeOpacity,
           texture: screenState[(tick + 1) % 2]
         });
-        // particleState[tick % 2] -> screenState[tick % 2]
-        drawParticles();
+        drawParticles({ particle: particleState[tick % 2] });
       });
       // screenState[tick % 2] -> screen
-      drawFadedTexture({
-        opacity: 1,
-        texture: screenState[tick % 2]
-      });
+      drawFadedTexture({ opacity: 1, texture: screenState[tick % 2] });
 
       // Update states
-      updateParticles(); // particleState[tick % 2] -> particleState[(tick+1) % 2]
+      updateParticles(); // particleState: [tick % 2] -> [(tick+1) % 2]
     });
 
   }, [], () => { regl.destroy() });
