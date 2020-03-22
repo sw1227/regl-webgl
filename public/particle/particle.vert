@@ -17,6 +17,6 @@ void main() {
         color.r / 255.0 + color.b,
         color.g / 255.0 + color.a);
 
-    gl_PointSize = 3.0;
+    gl_PointSize = 2.0;
     gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, 1.0 - 2.0 * v_particle_pos.y, 0, 1);
 }

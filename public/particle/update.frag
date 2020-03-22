@@ -11,7 +11,7 @@ void main() {
         color.g / 255.0 + color.a); // decode particle position from pixel RGBA
 
     // update particle position, wrapping around the date line
-    pos = fract(1.0 + pos + 0.002); // TODO:
+    pos = fract(1.0 + pos + 0.001); // TODO:
 
     // encode the new particle position back into RGBA
     gl_FragColor = vec4(

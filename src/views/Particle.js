@@ -57,9 +57,24 @@ const Particle = () => {
       a_pos: a_pos,
     },
     uniforms: {
-      u_screen: ({tick}) => screenState[tick % 2],
+      u_screen: ({ tick }) => screenState[tick % 2],
       u_opacity: regl.prop("opacity"),
     },
+    count: 6
+  });
+
+  // Draw screenState[(tick + 1) % 2] to screenState[tick % 2] with opacity
+  const blendCommand = (vert, frag) => regl({
+    vert: vert,
+    frag: frag,
+    attributes: {
+      a_pos: a_pos
+    },
+    uniforms: {
+      u_screen: ({ tick }) => screenState[(tick + 1) % 2],
+      u_opacity: regl.prop("opacity"),
+    },
+    framebuffer: ({ tick }) => screenState[tick % 2],
     count: 6
   });
 
@@ -100,6 +115,10 @@ const Particle = () => {
       await fetchShaderText(SHADER_PATH.quadVert),
       await fetchShaderText(SHADER_PATH.screenFrag)
     );
+    const drawPrevious = blendCommand(
+      await fetchShaderText(SHADER_PATH.quadVert),
+      await fetchShaderText(SHADER_PATH.screenFrag)
+    );
     const drawParticles = particleCommand(
       await fetchShaderText(SHADER_PATH.particleVert),
       await fetchShaderText(SHADER_PATH.particleFrag),
@@ -109,18 +128,19 @@ const Particle = () => {
       await fetchShaderText(SHADER_PATH.updateFrag)
     );
 
-    regl.frame(({ viewportWidth, viewportHeight }) => {
+    regl.frame(({ viewportWidth, viewportHeight, tick }) => {
       // Resize and clear screen
       screenState.forEach(screen => {
         screen.resize(viewportWidth, viewportHeight);
-        screen.use(() => {
-          regl.clear({
-            color: [0, 0, 0, 1]
-          });
+      });
+      screenState[tick % 2].use(() => {
+        regl.clear({
+          color: [0, 0, 0, 1]
         });
       });
 
       // Draw
+      drawPrevious({ opacity: fadeOpacity }); // screenState[(tick+1) % 2] -> screenState[tick % 2]
       drawParticles(); // particleState[tick % 2] -> screenState[tick % 2]
       drawTexture({ opacity: 1 }); // screenState[tick % 2] -> screen
 
