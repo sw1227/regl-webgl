@@ -53,8 +53,8 @@ const Kuramoto = () => {
     uniforms: {
       radius: radius,
       prevState: ({ tick }) => state[tick % 2],
-      k: 800, // coupling
-      omega: 5, // Natural frequency. TODO: random
+      k: 10, // coupling
+      omega: 10, // Natural frequency. TODO: random
     },
     count: 6
   });
