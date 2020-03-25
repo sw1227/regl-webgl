@@ -3,21 +3,22 @@ import createRegl from "regl";
 import { useAsyncEffect, fetchShaderText } from "../common";
 
 const SHADER_PATH = {
-  updateFrag: "/life/update.frag",
-  quadVert: "/life/quad.vert",
-  quadFrag: "/life/quad.frag",
+  quadVert: "/kuramoto/quad.vert",
+  quadFrag: "/kuramoto/quad.frag",
+  updateFrag: "/kuramoto/update.frag",
 };
 
 
-const Life = () => {
+const Kuramoto = () => {
   const regl = createRegl(); // No arguments: create a full screen canvas
 
   // ---------- Constants ----------
   const radius = 1024;
 
   // ---------- States ----------
+  // Only using 8-bits of red
   const initialState = (Array(radius * radius * 4)).fill(0).map(
-    () => Math.random() < 0.1 ? 255 : 0
+    () => 255 * Math.random()
   );
   const state = (Array(2)).fill().map(() =>
     regl.framebuffer({
@@ -31,38 +32,38 @@ const Life = () => {
   );
 
   // ---------- regl commands ----------
-  const updateCommand = (vert, frag) => regl({
-    vert: vert,
-    frag: frag,
-    attributes: {
-      position: [-4, -4, 4, -4, 0, 4]
-    },
-    uniforms: {
-      prevState: ({ tick }) => state[tick % 2],
-      radius: radius
-    },
-    depth: { enable: false },
-    count: 3
-  });
-
   const quadCommand = (vert, frag) => regl({
     vert: vert,
     frag: frag,
     attributes: {
-      position: [-4, -4, 4, -4, 0, 4]
+      position: [[0, 0], [1, 0], [0, 1], [0, 1], [1, 0], [1, 1]]
     },
     uniforms: {
       prevState: ({ tick }) => state[tick % 2]
     },
-    depth: { enable: false },
-    count: 3
+    count: 6
+  });
+
+  const updateCommand = (vert, frag) => regl({
+    vert: vert,
+    frag: frag,
+    attributes: {
+      position: [[0, 0], [1, 0], [0, 1], [0, 1], [1, 0], [1, 1]]
+    },
+    uniforms: {
+      radius: radius,
+      prevState: ({ tick }) => state[tick % 2],
+      k: 800, // coupling
+      omega: 5, // Natural frequency. TODO: random
+    },
+    count: 6
   });
 
 
   // ---------- Draw ----------
   useAsyncEffect(async () => {
     // Create regl command with fetched GLSL code
-    const updateLife = updateCommand(
+    const update = updateCommand(
       await fetchShaderText(SHADER_PATH.quadVert),
       await fetchShaderText(SHADER_PATH.updateFrag),
     );
@@ -75,7 +76,7 @@ const Life = () => {
     regl.frame(({ tick }) => {
       drawQuad();
       state[(tick + 1) % 2].use(() => {
-        updateLife();
+        update();
       });
     });
 
@@ -85,4 +86,4 @@ const Life = () => {
 };
 
 
-export default Life;
+export default Kuramoto;
