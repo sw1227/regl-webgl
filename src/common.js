@@ -17,3 +17,16 @@ export async function fetchShaderText(path) {
   const text = await response.text();
   return text;
 };
+
+
+// Load image bitmap for texture
+export function loadImage(imageSource) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.src = imageSource;
+    image.onload = async () => {
+      const bitmap = await createImageBitmap(image);
+      resolve(bitmap);
+    };
+  });
+};
