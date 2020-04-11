@@ -2,7 +2,8 @@ precision mediump float;
 
 uniform float radius;
 uniform vec2 target;
-uniform sampler2D texture;
+uniform sampler2D demTexture;
+uniform sampler2D mapTexture;
 varying vec2 v_tex_pos;
 
 float pixelSize = 1.0 / radius;
@@ -28,7 +29,7 @@ float decode(vec3 v) {
 
 // Get height[m] at given position (0-1) from elevation texture
 float getHeight(vec2 pos) {
-    vec4 tex = texture2D(texture, vec2(pos.x, 1.0 - pos.y)); // Flip y
+    vec4 tex = texture2D(demTexture, vec2(pos.x, 1.0 - pos.y)); // Flip y
     return decode(tex.rgb);
 }
 
@@ -53,16 +54,20 @@ bool visible(vec2 target) {
             // next step is horizontal
             point = vec2(point.x + pixelSize * signDiff.x, point.y);
             ix = ix + pixelSize;
-        } else {
+        } else if (((0.5 + ix) / absDiff.x) > ((0.5 + iy) / absDiff.y)) {
             // next step is vertical
             point = vec2(point.x, point.y + pixelSize * signDiff.y);
             iy = iy + pixelSize;
+        } else {
+            // next step is diagonal
+            point = vec2(point.x + pixelSize * signDiff.x, point.y + pixelSize * signDiff.y);
+            ix = ix + pixelSize;
+            iy = iy + pixelSize;
         }
 
-        float midHeight = getHeight(point);
         float distRatio = length(point - v_tex_pos) / length(diff);
         float interpolatedHeight = mix(pixelHeight, targetHeight, distRatio);
-        if (interpolatedHeight < midHeight) {
+        if (interpolatedHeight < getHeight(point)) {
             result = false; // Target is hidden by the current pixel
             break;
         }
@@ -76,8 +81,10 @@ bool visible(vec2 target) {
 
 void main() {
     float height = getHeight(v_tex_pos);
+    vec4 tex = texture2D(mapTexture, vec2(v_tex_pos.x, 1.0 - v_tex_pos.y));
+
     float r = visible(target) ? 0.2 : 0.0;
-    gl_FragColor = vec4(r, 0.0, 0.0, 1.0-(height - 500.0)/1000.0);
+    gl_FragColor = vec4(tex.rgb, visible(target) ? 1.0 : 0.4);
 
     // Draw point around target
     if (length(v_tex_pos - target) < 2.0 / 255.0) {
